@@ -162,9 +162,38 @@
     header, .tabs, .btn-row, .ai-box { display: none !important; }
     .card { box-shadow: none; border: 1px solid #ddd; }
   }
+  .lightbox-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.92);
+    align-items: center; justify-content: center; flex-direction: column;
+  }
+  .lightbox-overlay.show { display: flex; }
+  .lightbox-overlay img {
+    max-width: 92vw; max-height: 78vh;
+    border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    object-fit: contain;
+  }
+  .lightbox-caption { color: #fff; font-size: 1rem; font-weight: 700; margin-top: 14px; text-align: center; }
+  .lightbox-sub { color: #aaa; font-size: 0.82rem; margin-top: 4px; text-align: center; }
+  .lightbox-close {
+    position: fixed; top: 18px; left: 22px; color: #fff; font-size: 1.6rem; cursor: pointer;
+    background: rgba(255,255,255,0.15); border: none;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+  .img-card { cursor: zoom-in; }
 </style>
 </head>
 <body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+  <div class="lightbox-sub" id="lightbox-sub"></div>
+</div>
 
 <header>
   <div style="display:flex;align-items:center;gap:14px;">
@@ -493,6 +522,7 @@ function renderImages() {
         <p>${img.desc}</p>
         <span class="normal-range">طبيعي: ${img.normal}</span>
       </div>`;
+    div.onclick = () => openLightbox(img.url, img.name, img.desc);
     grid.appendChild(div);
   });
 }
@@ -735,6 +765,21 @@ function resetAll() {
   document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
   showTab('patient');
 }
+
+function openLightbox(url, name, desc) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox-caption').textContent = name;
+  document.getElementById('lightbox-sub').textContent = desc;
+  document.getElementById('lightbox').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeLightbox(); });
 
 window.onload = init;
 </script>
