@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>برنامج تصنيف فحوصات الإدرار بالذكاء الاصطناعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0a1628;
+    --teal: #0d7377;
+    --teal-light: #14a0a5;
+    --gold: #e8a020;
+    --gold-light: #f5c842;
+    --red-alert: #c0392b;
+    --green-ok: #1a7a4a;
+    --purple: #6c3fc5;
+    --purple-light: #8b5cf6;
+    --shadow: 0 8px 32px rgba(10,22,40,0.13);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, #0a1628 0%, #0d3b5c 50%, #0a2540 100%);
+    min-height: 100vh;
+    color: #222;
+    padding-bottom: 60px;
+  }
+  header {
+    background: linear-gradient(90deg, #0a1628, #0d7377);
+    padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-title h1 { font-size: 1.3rem; font-weight: 800; color: #fff; }
+  .header-title span { font-size: 0.8rem; color: var(--gold-light); }
+  .ai-badge {
+    background: linear-gradient(90deg, var(--purple), var(--purple-light));
+    color: #fff; font-weight: 700; font-size: 0.78rem;
+    padding: 5px 14px; border-radius: 30px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100%{ box-shadow: 0 0 16px rgba(108,63,197,0.5); }
+    50%{ box-shadow: 0 0 28px rgba(108,63,197,0.9); }
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 24px 16px 0; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab-btn {
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+    border: none; border-radius: 30px; padding: 8px 18px;
+    font-family: 'Tajawal', sans-serif; font-size: 0.88rem; font-weight: 500;
+    cursor: pointer; transition: all 0.25s;
+  }
+  .tab-btn.active { background: var(--gold); color: var(--navy); font-weight: 700; }
+  .tab-btn:not(.active):hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeUp 0.35s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .card {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 22px 24px; margin-bottom: 18px;
+  }
+  .card-title {
+    font-size: 1.05rem; font-weight: 700; color: var(--navy);
+    margin-bottom: 16px; padding-bottom: 10px;
+    border-bottom: 3px solid var(--teal-light);
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:580px){ .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 0.82rem; font-weight: 600; color: #555; }
+  .form-group input, .form-group select {
+    padding: 8px 11px; border: 2px solid #e0e8f0; border-radius: 10px;
+    font-family: 'Tajawal', sans-serif; font-size: 0.92rem;
+    background: #f7fafc; color: var(--navy); transition: border 0.2s; text-align: right;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--teal); outline: none; background: #fff; }
+  .test-table { width: 100%; border-collapse: collapse; }
+  .test-table th {
+    background: var(--navy); color: #fff;
+    padding: 9px 11px; font-size: 0.82rem; text-align: right;
+  }
+  .test-table td { padding: 7px 11px; border-bottom: 1px solid #eef2f7; font-size: 0.88rem; vertical-align: middle; }
+  .test-table tr:hover td { background: #f0f8ff; }
+  .test-table select, .test-table input[type=number] {
+    padding: 5px 9px; border: 1.5px solid #d0dce8; border-radius: 8px;
+    font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+    width: 100%; text-align: right; background: #f9fbfd;
+  }
+  .test-table select:focus, .test-table input:focus { border-color: var(--teal); outline: none; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+  .badge-normal  { background: #e0f5ec; color: var(--green-ok); }
+  .badge-abnormal{ background: #fdecea; color: var(--red-alert); }
+  .badge-pending { background: #f0f0f0; color: #999; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 22px; border-radius: 30px; border: none;
+    font-family: 'Tajawal', sans-serif; font-size: 0.92rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: var(--teal-light); }
+  .btn-gold { background: var(--gold); color: var(--navy); }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-ai { background: linear-gradient(90deg, var(--purple), var(--purple-light)); color: #fff; box-shadow: 0 4px 16px rgba(108,63,197,0.3); }
+  .btn-ai:hover { box-shadow: 0 6px 24px rgba(108,63,197,0.5); transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--teal); border: 2px solid var(--teal); }
+  .btn-outline:hover { background: var(--teal); color: #fff; }
+  .btn-row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 16px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+  .ai-box {
+    background: linear-gradient(135deg, #f8f4ff, #f0e8ff);
+    border: 2px solid var(--purple-light);
+    border-radius: 14px; padding: 18px 22px; margin-top: 18px; display: none;
+  }
+  .ai-box.show { display: block; animation: fadeUp 0.5s ease; }
+  .ai-box-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .ai-icon {
+    background: linear-gradient(90deg, var(--purple), var(--purple-light));
+    color: #fff; width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+  }
+  .ai-box-header h3 { font-size: 0.97rem; font-weight: 700; color: var(--purple); }
+  .ai-box-header small { color: #888; font-size: 0.78rem; }
+  .ai-content { font-size: 0.9rem; line-height: 1.9; color: #333; white-space: pre-wrap; }
+  .loading-dots { display: inline-flex; gap: 5px; align-items: center; }
+  .loading-dots span { width: 7px; height: 7px; background: var(--purple); border-radius: 50%; animation: bounce 1.2s infinite; }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.2);opacity:1} }
+  .report-section {
+    background: linear-gradient(135deg, #f8fffe, #f0f8f9);
+    border: 2px solid var(--teal-light);
+    border-radius: var(--radius); padding: 22px 24px; margin-top: 6px;
+  }
+  .report-header { text-align: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px dashed var(--teal-light); }
+  .report-header h2 { color: var(--navy); font-size: 1.1rem; }
+  .report-header p { color: #666; font-size: 0.82rem; margin-top: 3px; }
+  .report-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #e8f4f5; font-size: 0.88rem; }
+  .report-row:last-child { border: none; }
+  .report-label { color: #555; }
+  .report-value { font-weight: 700; color: var(--navy); }
+  .report-value.abn { color: var(--red-alert); }
+  .stat-chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat-chip { background: #fff; border-radius: 12px; padding: 10px 16px; text-align: center; min-width: 100px; flex: 1; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+  .stat-chip .num { font-size: 1.4rem; font-weight: 800; color: var(--teal); }
+  .stat-chip .lbl { font-size: 0.72rem; color: #888; margin-top: 2px; }
+  .img-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(170px,1fr)); gap: 14px; }
+  .img-card { background: #f5f9ff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; }
+  .img-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(13,115,119,0.2); }
+  .img-info { padding: 9px 11px; }
+  .img-info h4 { font-size: 0.84rem; font-weight: 700; color: var(--navy); }
+  .img-info p { font-size: 0.73rem; color: #666; margin-top: 3px; }
+  .normal-range { font-size: 0.7rem; margin-top: 5px; background: #e0f5ec; color: var(--green-ok); display: inline-block; padding: 2px 7px; border-radius: 10px; }
+  .section-sep td { background: #f0f8ff; font-weight: 700; color: var(--navy); padding: 8px 12px; font-size: 0.88rem; }
+  .section-sep-crystal td { background: #fff8f0; font-weight: 700; color: var(--navy); padding: 8px 12px; font-size: 0.88rem; }
+  @media print {
+    body { background: #fff !important; }
+    header, .tabs, .btn-row, .ai-box { display: none !important; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">
+    <h1>🔬 تصنيف فحوصات الإدرار — بالذكاء الاصطناعي</h1>
+    <span>AI-Powered Urinalysis Classifier — Al-Kafeel University</span>
+  </div>
+  <div class="ai-badge">🤖 Claude AI</div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('patient')">👤 بيانات المريض</button>
+    <button class="tab-btn" onclick="showTab('physical')">🌡️ فيزيائي</button>
+    <button class="tab-btn" onclick="showTab('chemical')">⚗️ كيميائي</button>
+    <button class="tab-btn" onclick="showTab('micro')">🔬 مجهري</button>
+    <button class="tab-btn" onclick="showTab('images')">🖼️ صور مرجعية</button>
+    <button class="tab-btn" onclick="showTab('report')">📋 التقرير + AI</button>
+  </div>
+
+  <!-- PATIENT -->
+  <div id="tab-patient" class="tab-content active">
+    <div class="card">
+      <div class="card-title">👤 بيانات المريض | Patient Information</div>
+      <div class="form-grid">
+        <div class="form-group"><label>الاسم الكامل</label><input type="text" id="pt-name" placeholder="اسم المريض"></div>
+        <div class="form-group"><label>العمر</label><input type="number" id="pt-age" placeholder="السنوات" min="0" max="120"></div>
+        <div class="form-group"><label>الجنس</label>
+          <select id="pt-gender">
+            <option value="">-- اختر --</option>
+            <option value="male">ذكر / Male</option>
+            <option value="female">أنثى / Female</option>
+          </select>
+        </div>
+        <div class="form-group"><label>تاريخ الفحص</label><input type="date" id="pt-date"></div>
+        <div class="form-group"><label>رقم الملف</label><input type="text" id="pt-id" placeholder="رقم الملف"></div>
+        <div class="form-group"><label>الطبيب المحول</label><input type="text" id="pt-doctor" placeholder="اسم الطبيب"></div>
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>الأعراض / الشكوى الرئيسية (اختياري — يساعد الذكاء الاصطناعي)</label>
+        <input type="text" id="pt-symptoms" placeholder="مثال: حرقة في البول، آلام أسفل الظهر، حمى...">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="showTab('physical')">التالي ←</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHYSICAL -->
+  <div id="tab-physical" class="tab-content">
+    <div class="card">
+      <div class="card-title">🌡️ الفحص الفيزيائي | Physical Examination</div>
+      <table class="test-table">
+        <thead><tr><th>الفحص</th><th>النتيجة</th><th>القيمة الطبيعية</th><th>الحالة</th></tr></thead>
+        <tbody id="physical-body"></tbody>
+      </table>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="showTab('chemical')">التالي ←</button>
+        <button class="btn btn-outline" onclick="showTab('patient')">→ رجوع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHEMICAL -->
+  <div id="tab-chemical" class="tab-content">
+    <div class="card">
+      <div class="card-title">⚗️ الفحص الكيميائي | Chemical Examination</div>
+      <table class="test-table">
+        <thead><tr><th>الفحص</th><th>النتيجة</th><th>القيمة الطبيعية</th><th>الحالة</th></tr></thead>
+        <tbody id="chemical-body"></tbody>
+      </table>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="showTab('micro')">التالي ←</button>
+        <button class="btn btn-outline" onclick="showTab('physical')">→ رجوع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MICRO -->
+  <div id="tab-micro" class="tab-content">
+    <div class="card">
+      <div class="card-title">🔬 الفحص المجهري | Microscopic Examination</div>
+      <table class="test-table">
+        <thead><tr><th>الفحص</th><th>النتيجة</th><th>القيمة الطبيعية</th><th>الحالة</th></tr></thead>
+        <tbody id="micro-body"></tbody>
+      </table>
+      <div class="btn-row">
+        <button class="btn btn-gold" onclick="showTab('report'); generateReport()">📋 إنشاء التقرير</button>
+        <button class="btn btn-outline" onclick="showTab('chemical')">→ رجوع</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGES -->
+  <div id="tab-images" class="tab-content">
+    <div class="card">
+      <div class="card-title">🖼️ الصور المرجعية | Microscopic Reference Images</div>
+      <p style="color:#666;font-size:0.85rem;margin-bottom:14px;">صور مجهرية حقيقية من المراجع العلمية — مرجع تعليمي لطلاب تقنيات المختبرات</p>
+      <div class="img-grid" id="images-grid"></div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div id="tab-report" class="tab-content">
+    <div class="card">
+      <div class="card-title">📋 التقرير النهائي | Final Report</div>
+      <div class="stat-chips" id="stat-chips"></div>
+      <div class="report-section" id="report-content">
+        <p style="text-align:center;color:#aaa;padding:28px">أكمل إدخال البيانات أولاً</p>
+      </div>
+      <div class="ai-box" id="ai-box">
+        <div class="ai-box-header">
+          <div class="ai-icon">🤖</div>
+          <div>
+            <h3>التحليل بالذكاء الاصطناعي — Claude AI</h3>
+            <small>تفسير سريري ذكي مبني على جميع النتائج معاً</small>
+          </div>
+        </div>
+        <div class="ai-content" id="ai-content"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ai" id="ai-btn" onclick="runAIAnalysis()">🤖 تحليل بالذكاء الاصطناعي</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-outline" onclick="resetAll()">🔄 فحص جديد</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const PHYSICAL_TESTS = [
+  { id:'color',      ar:'اللون',             en:'Color',           type:'select', normal:'Pale Yellow',
+    options:['Pale Yellow','Yellow','Dark Yellow','Orange','Red','Brown','Colorless'] },
+  { id:'appearance', ar:'المظهر',            en:'Appearance',      type:'select', normal:'Clear',
+    options:['Clear','Slightly Turbid','Turbid','Cloudy'] },
+  { id:'volume',     ar:'الحجم (مل/يوم)',   en:'Volume ml/day',   type:'select', normal:'1000–2000',
+    options:['< 500','500–999','1000–2000','2001–3000','> 3000'] },
+  { id:'sg',         ar:'الكثافة النوعية',  en:'Specific Gravity', type:'select', normal:'1.010',
+    options:['1.001','1.005','1.010','1.015','1.020','1.025','1.030','1.035'] },
+];
+const CHEMICAL_TESTS = [
+  { id:'ph',         ar:'الحموضة pH',        en:'pH',            type:'number', normal:'4.5–8.0', min:1, max:14, step:0.5 },
+  { id:'protein',    ar:'البروتين',           en:'Protein',       type:'select', normal:'Negative',
+    options:['Negative','Trace','1+','2+','3+','4+'] },
+  { id:'glucose',    ar:'الجلوكوز',           en:'Glucose',       type:'select', normal:'Negative',
+    options:['Negative','Trace','1+','2+','3+','4+'] },
+  { id:'ketone',     ar:'الكيتون',            en:'Ketone',        type:'select', normal:'Negative',
+    options:['Negative','Trace','Small','Moderate','Large'] },
+  { id:'blood',      ar:'الدم',              en:'Blood',         type:'select', normal:'Negative',
+    options:['Negative','Few +','++','+++','++++'] },
+  { id:'bilirubin',  ar:'البيليروبين',        en:'Bilirubin',     type:'select', normal:'Negative',
+    options:['Negative','1+','2+','3+'] },
+  { id:'nitrite',    ar:'النترات',            en:'Nitrite',       type:'select', normal:'Negative',
+    options:['Negative','Positive'] },
+  { id:'leukocytes', ar:'كريات البيضاء (LE)',en:'Leukocytes',    type:'select', normal:'Negative',
+    options:['Negative','Few +','++','+++','++++'] },
+];
+const CAST_TYPES = [
+  { id:'cast_hyaline',  ar:'Hyaline — زجاجية' },
+  { id:'cast_rbc',      ar:'RBC — دموية' },
+  { id:'cast_wbc',      ar:'WBC — بيضاء' },
+  { id:'cast_granular', ar:'Granular — حبيبية' },
+  { id:'cast_waxy',     ar:'Waxy — شمعية' },
+  { id:'cast_fatty',    ar:'Fatty — دهنية' },
+];
+const CRYSTAL_TYPES = [
+  { id:'cryst_caox',      ar:'Calcium Oxalate — أوكسالات الكالسيوم' },
+  { id:'cryst_uric',      ar:'Uric Acid — حمض البوليك' },
+  { id:'cryst_triphosph', ar:'Triple Phosphate — فوسفات مثلث' },
+  { id:'cryst_cystine',   ar:'Cystine — سيستين' },
+  { id:'cryst_amorph_ur', ar:'Amorphous Urate — يوريت غير متبلور' },
+  { id:'cryst_amorph_ph', ar:'Amorphous Phosphate — فوسفيت غير متبلور' },
+];
+const MICRO_TESTS = [
+  { id:'rbc',        ar:'كريات الدم الحمراء RBC', en:'RBC /HPF',        type:'number', normal:'0–3', min:0, max:500 },
+  { id:'wbc',        ar:'كريات الدم البيضاء WBC', en:'WBC /HPF',        type:'number', normal:'0–5', min:0, max:500 },
+  { id:'epithelial', ar:'الخلايا الطلائية',       en:'Epithelial Cells', type:'select', normal:'None',
+    options:['None','Few +','++','+++'] },
+  { id:'bacteria',   ar:'البكتيريا',              en:'Bacteria',         type:'select', normal:'None',
+    options:['None','Seen','1+','2+','3+'] },
+];
+
+// Real microscopy images from Wikimedia Commons
+const IMAGES_DATA = [
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Urinary_red_blood_cells.jpg/320px-Urinary_red_blood_cells.jpg',
+    name:'RBC — كريات دم حمراء', desc:'خلايا صغيرة مزدوجة التحدب، 6-8 ميكرون', normal:'0–3/HPF' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Pyuria.jpg/320px-Pyuria.jpg',
+    name:'WBC (Pyuria) — كريات بيضاء', desc:'خلايا متعددة النواة، أكبر من الحمراء', normal:'0–5/HPF' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Squamous_epithelial_cells_in_urine.jpg/320px-Squamous_epithelial_cells_in_urine.jpg',
+    name:'Epithelial — خلايا طلائية', desc:'خلايا مسطحة كبيرة ذات نواة مركزية', normal:'قليلة' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Hyaline_cast.jpg/320px-Hyaline_cast.jpg',
+    name:'Hyaline Cast — زجاجية', desc:'إسطوانات شفافة من البروتين، ترى في الجهد والجفاف', normal:'None' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Granular_cast.jpg/320px-Granular_cast.jpg',
+    name:'Granular Cast — حبيبية', desc:'إسطوانات بها حبيبات — تدل على مرض كلوي', normal:'None' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/WBC_cast.jpg/320px-WBC_cast.jpg',
+    name:'WBC Cast — بيضاء', desc:'تدل على التهاب النفرون Pyelonephritis', normal:'None' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Calcium_oxalate_crystals_in_urine.jpg/320px-Calcium_oxalate_crystals_in_urine.jpg',
+    name:'Calcium Oxalate — أوكسالات', desc:'شكل مظروف (Envelope shape) — شائعة', normal:'قليلة' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Uric_acid_crystals.jpg/320px-Uric_acid_crystals.jpg',
+    name:'Uric Acid — حمض البوليك', desc:'بلورات صفراء على شكل معين Rhomboid', normal:'None' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Triple_phosphate_crystals_in_urine.jpg/320px-Triple_phosphate_crystals_in_urine.jpg',
+    name:'Triple Phosphate — فوسفات مثلث', desc:'شكل غطاء التابوت (Coffin-lid)', normal:'قليلة' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Cystine_crystals.jpg/320px-Cystine_crystals.jpg',
+    name:'Cystine — سيستين', desc:'بلورات سداسية شفافة — نادرة، مرض وراثي', normal:'None' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Amorphous_urates.jpg/320px-Amorphous_urates.jpg',
+    name:'Amorphous Urate — يوريت', desc:'حبيبات صفراء-بنية، تترسب في البول الحامضي', normal:'None' },
+  { url:'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Bacteria_in_urine.jpg/320px-Bacteria_in_urine.jpg',
+    name:'Bacteria — بكتيريا', desc:'أجسام صغيرة قضيبية أو كروية', normal:'None' },
+];
+
+// ===== INIT =====
+function init() {
+  renderTable('physical-body', PHYSICAL_TESTS);
+  renderTable('chemical-body', CHEMICAL_TESTS);
+  renderTable('micro-body', MICRO_TESTS);
+  renderCastsTable();
+  renderCrystalsTable();
+  renderImages();
+  document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
+}
+
+function renderTable(tbodyId, tests) {
+  const tbody = document.getElementById(tbodyId);
+  tbody.innerHTML = '';
+  tests.forEach(t => {
+    const tr = document.createElement('tr');
+    let inputHtml = '';
+    if (t.type === 'select') {
+      inputHtml = `<select id="inp-${t.id}" onchange="checkStatus('${t.id}')">
+        <option value="">-- اختر --</option>
+        ${t.options.map(o => `<option>${o}</option>`).join('')}
+      </select>`;
+    } else {
+      inputHtml = `<input type="number" id="inp-${t.id}" placeholder="أدخل القيمة"
+        min="${t.min||0}" max="${t.max||9999}" step="${t.step||1}"
+        oninput="checkStatus('${t.id}')">`;
+    }
+    tr.innerHTML = `
+      <td><b>${t.ar}</b><br><small style="color:#888">${t.en||''}</small></td>
+      <td>${inputHtml}</td>
+      <td><small style="color:#666">${t.normal}</small></td>
+      <td><span id="status-${t.id}" class="badge badge-pending">—</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderCastsTable() {
+  const tbody = document.getElementById('micro-body');
+  const sep = document.createElement('tr');
+  sep.className = 'section-sep';
+  sep.innerHTML = `<td colspan="4">🔬 الإسطوانات Casts — تقييم كل نوع بصلايب</td>`;
+  tbody.appendChild(sep);
+  CAST_TYPES.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${t.ar}</b></td>
+      <td><select id="inp-${t.id}" onchange="checkStatusSimple('${t.id}')">
+        <option value="">-- اختر --</option>
+        <option>None</option><option>+</option><option>++</option><option>+++</option>
+      </select></td>
+      <td><small style="color:#666">None</small></td>
+      <td><span id="status-${t.id}" class="badge badge-pending">—</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderCrystalsTable() {
+  const tbody = document.getElementById('micro-body');
+  const sep = document.createElement('tr');
+  sep.className = 'section-sep-crystal';
+  sep.innerHTML = `<td colspan="4">💎 البلورات Crystals — تقييم كل نوع بصلايب</td>`;
+  tbody.appendChild(sep);
+  CRYSTAL_TYPES.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><b>${t.ar}</b></td>
+      <td><select id="inp-${t.id}" onchange="checkStatusSimple('${t.id}')">
+        <option value="">-- اختر --</option>
+        <option>None</option><option>+</option><option>++</option><option>+++</option>
+      </select></td>
+      <td><small style="color:#666">None</small></td>
+      <td><span id="status-${t.id}" class="badge badge-pending">—</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function checkStatus(id) {
+  const allTests = [...PHYSICAL_TESTS, ...CHEMICAL_TESTS, ...MICRO_TESTS];
+  const t = allTests.find(x => x.id === id);
+  const el = document.getElementById(`inp-${t.id}`);
+  const val = el.value;
+  const statusEl = document.getElementById(`status-${t.id}`);
+  if (!val) { statusEl.className = 'badge badge-pending'; statusEl.textContent = '—'; return; }
+  let isAbn = false;
+  if (t.type === 'select') {
+    isAbn = val !== t.normal;
+  } else {
+    const n = parseFloat(val);
+    if (t.id === 'ph') isAbn = n < 4.5 || n > 8.0;
+    else if (t.id === 'rbc') isAbn = n > 3;
+    else if (t.id === 'wbc') isAbn = n > 5;
+  }
+  statusEl.className = isAbn ? 'badge badge-abnormal' : 'badge badge-normal';
+  statusEl.textContent = isAbn ? '⚠️ غير طبيعي' : '✅ طبيعي';
+}
+
+function checkStatusSimple(id) {
+  const el = document.getElementById(`inp-${id}`);
+  const val = el.value;
+  const statusEl = document.getElementById(`status-${id}`);
+  if (!val) { statusEl.className = 'badge badge-pending'; statusEl.textContent = '—'; return; }
+  const isAbn = val !== 'None';
+  statusEl.className = isAbn ? 'badge badge-abnormal' : 'badge badge-normal';
+  statusEl.textContent = isAbn ? '⚠️ غير طبيعي' : '✅ طبيعي';
+}
+
+function renderImages() {
+  const grid = document.getElementById('images-grid');
+  grid.innerHTML = '';
+  IMAGES_DATA.forEach(img => {
+    const div = document.createElement('div');
+    div.className = 'img-card';
+    div.innerHTML = `
+      <div style="height:130px;overflow:hidden;background:#f0f4f8;">
+        <img src="${img.url}" alt="${img.name}"
+          style="width:100%;height:130px;object-fit:cover;"
+          onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:130px;font-size:2.5rem;color:#bbb;\\'>🔬</div>'">
+      </div>
+      <div class="img-info">
+        <h4>${img.name}</h4>
+        <p>${img.desc}</p>
+        <span class="normal-range">طبيعي: ${img.normal}</span>
+      </div>`;
+    grid.appendChild(div);
+  });
+}
+
+// ===== REPORT =====
+function generateReport() {
+  const name = document.getElementById('pt-name').value || '—';
+  const age  = document.getElementById('pt-age').value  || '—';
+  const gen  = document.getElementById('pt-gender').value;
+  const date = document.getElementById('pt-date').value || '—';
+  const pid  = document.getElementById('pt-id').value   || '—';
+  const doc  = document.getElementById('pt-doctor').value || '—';
+  const genderTxt = gen === 'male' ? 'ذكر' : gen === 'female' ? 'أنثى' : '—';
+
+  const allTests = [...PHYSICAL_TESTS, ...CHEMICAL_TESTS, ...MICRO_TESTS];
+  let rows = ''; let abn = 0; let filled = 0;
+
+  allTests.forEach(t => {
+    const el = document.getElementById(`inp-${t.id}`);
+    if (!el || !el.value) return;
+    filled++;
+    const isAbn = document.getElementById(`status-${t.id}`)?.classList.contains('badge-abnormal');
+    if (isAbn) abn++;
+    rows += `<div class="report-row">
+      <span class="report-label">${t.ar}</span>
+      <span class="report-value ${isAbn?'abn':''}">${el.value} ${isAbn?'⚠️':''}</span>
+    </div>`;
+  });
+  [...CAST_TYPES, ...CRYSTAL_TYPES].forEach(t => {
+    const el = document.getElementById(`inp-${t.id}`);
+    if (!el || !el.value || el.value === 'None' || el.value === '') return;
+    filled++; abn++;
+    rows += `<div class="report-row">
+      <span class="report-label">${t.ar}</span>
+      <span class="report-value abn">${el.value} ⚠️</span>
+    </div>`;
+  });
+
+  document.getElementById('stat-chips').innerHTML = `
+    <div class="stat-chip"><div class="num">${filled}</div><div class="lbl">فحوصات مُدخلة</div></div>
+    <div class="stat-chip"><div class="num" style="color:var(--green-ok)">${filled-abn}</div><div class="lbl">طبيعية</div></div>
+    <div class="stat-chip"><div class="num" style="color:var(--red-alert)">${abn}</div><div class="lbl">غير طبيعية</div></div>`;
+
+  document.getElementById('report-content').innerHTML = `
+    <div class="report-header">
+      <h2>🔬 تقرير تحليل الإدرار | Urinalysis Report</h2>
+      <p>جامعة الكفيل — قسم تقنيات المختبرات الطبية</p>
+    </div>
+    <div class="report-row"><span class="report-label">👤 الاسم</span><span class="report-value">${name}</span></div>
+    <div class="report-row"><span class="report-label">🎂 العمر</span><span class="report-value">${age} سنة</span></div>
+    <div class="report-row"><span class="report-label">⚧ الجنس</span><span class="report-value">${genderTxt}</span></div>
+    <div class="report-row"><span class="report-label">📅 التاريخ</span><span class="report-value">${date}</span></div>
+    <div class="report-row"><span class="report-label">📁 رقم الملف</span><span class="report-value">${pid}</span></div>
+    <div class="report-row"><span class="report-label">👨‍⚕️ الطبيب</span><span class="report-value">${doc}</span></div>
+    <div style="margin:12px 0;border-top:2px dashed var(--teal-light)"></div>
+    ${rows || '<p style="text-align:center;color:#aaa;padding:18px">لم تُدخل أي نتائج فحوصات بعد</p>'}`;
+}
+
+// ===== AI ANALYSIS =====
+async function runAIAnalysis() {
+  const btn = document.getElementById('ai-btn');
+  const box = document.getElementById('ai-box');
+  const content = document.getElementById('ai-content');
+
+  const allTests = [...PHYSICAL_TESTS, ...CHEMICAL_TESTS, ...MICRO_TESTS];
+  const results = [];
+  allTests.forEach(t => {
+    const el = document.getElementById(`inp-${t.id}`);
+    if (el && el.value) {
+      const isAbn = document.getElementById(`status-${t.id}`)?.classList.contains('badge-abnormal');
+      results.push(`${t.ar} (${t.en||t.ar}): ${el.value} [${isAbn?'غير طبيعي':'طبيعي'}] — طبيعي: ${t.normal}`);
+    }
+  });
+  [...CAST_TYPES, ...CRYSTAL_TYPES].forEach(t => {
+    const el = document.getElementById(`inp-${t.id}`);
+    if (el && el.value && el.value !== 'None' && el.value !== '')
+      results.push(`${t.ar}: ${el.value} [غير طبيعي]`);
+  });
+
+  if (results.length === 0) { alert('الرجاء إدخال نتائج الفحوصات أولاً!'); return; }
+
+  const name     = document.getElementById('pt-name').value    || 'غير محدد';
+  const age      = document.getElementById('pt-age').value     || 'غير محدد';
+  const gv       = document.getElementById('pt-gender').value;
+  const gender   = gv === 'male' ? 'ذكر' : gv === 'female' ? 'أنثى' : 'غير محدد';
+  const symptoms = document.getElementById('pt-symptoms').value || 'لا يوجد';
+
+  const prompt = `أنت أستاذ في تقنيات المختبرات الطبية متخصص في تحليل الإدرار. مهمتك تعليمية بحتة. يجب أن تُصدر حكماً تشخيصياً واضحاً وصريحاً بناءً على النتائج المخبرية المقدمة.
+
+معلومات المريض:
+- الاسم: ${name}
+- العمر: ${age} سنة
+- الجنس: ${gender}
+- الأعراض: ${symptoms}
+
+نتائج تحليل الإدرار:
+${results.join('\n')}
+
+اكتب تقريراً منظماً بالأقسام التالية بالترتيب الحرفي، ولا تتجاوز أي قسم:
+
+**القسم 1 — 📊 ملخص النتائج**
+جدول مختصر بالنتائج غير الطبيعية فقط.
+
+**القسم 2 — 🏥 التشخيص**
+هذا القسم إلزامي ومحوري. يجب أن تُجيب بشكل مباشر:
+- هل المريض مصاب أم سليم؟ اكتب الجواب صراحةً في أول سطر.
+- اذكر اسم المرض أو الحالة المرضية الأكثر احتمالاً بوضوح (مثل: التهاب المسالك البولية، التهاب كبيبات الكلى، مرض السكري، إلخ).
+- رتّب التشخيصات المحتملة من الأعلى احتمالاً إلى الأدنى مع نسبة مئوية تقريبية لكل منها.
+- وضّح النتائج المخبرية التي تدعم كل تشخيص.
+
+**القسم 3 — 🔍 التفسير السريري**
+فسّر كل نتيجة غير طبيعية وعلاقتها بالتشخيص الذي ذكرته.
+
+**القسم 4 — 📚 نقاط تعليمية للطالب**
+3 نقاط مفيدة لطلاب تقنيات المختبرات مرتبطة بهذه الحالة.
+
+**القسم 5 — ✅ التوصيات**
+الفحوصات التكميلية المطلوبة والخطوات العلاجية المقترحة.
+
+تنبيه مهم: هذا التقرير لأغراض تعليمية فقط ولا يُغني عن الطبيب المختص. يجب إصدار التشخيص بشكل صريح لأن الهدف تعليمي وليس سريرياً حقيقياً.`;
+
+  btn.disabled = true;
+  box.classList.add('show');
+  content.innerHTML = `<div class="loading-dots"><span></span><span></span><span></span></div> جاري التحليل بالذكاء الاصطناعي...`;
+
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.content && data.content[0] && data.content[0].text) {
+      content.innerHTML = data.content[0].text
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    } else {
+      content.innerHTML = '⚠️ خطأ في الاستجابة: ' + JSON.stringify(data.error || data);
+    }
+  } catch (err) {
+    content.innerHTML = `⚠️ خطأ في الاتصال: ${err.message}`;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🔄 إعادة التحليل';
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const idx = ['patient','physical','chemical','micro','images','report'].indexOf(name);
+  document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+}
+
+function resetAll() {
+  if (!confirm('مسح جميع البيانات والبدء من جديد؟')) return;
+  document.querySelectorAll('input,select').forEach(el => el.value = '');
+  document.querySelectorAll('.badge').forEach(el => { el.className = 'badge badge-pending'; el.textContent = '—'; });
+  document.getElementById('report-content').innerHTML = '<p style="text-align:center;color:#aaa;padding:28px">أكمل إدخال البيانات أولاً</p>';
+  document.getElementById('stat-chips').innerHTML = '';
+  document.getElementById('ai-box').classList.remove('show');
+  document.getElementById('ai-content').innerHTML = '';
+  document.getElementById('ai-btn').disabled = false;
+  document.getElementById('ai-btn').innerHTML = '🤖 تحليل بالذكاء الاصطناعي';
+  document.getElementById('pt-date').value = new Date().toISOString().split('T')[0];
+  showTab('patient');
+}
+
+window.onload = init;
+</script>
+</body>
+</html>
