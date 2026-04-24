@@ -345,8 +345,8 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
           <label class="ai-radio-label" style="border:2px solid var(--purple);color:var(--purple);">
             <input type="radio" name="ai-model" value="claude" checked style="accent-color:var(--purple);"> 🟣 Claude
           </label>
-          <label class="ai-radio-label" style="border:2px solid #1a73e8;color:#1a73e8;">
-            <input type="radio" name="ai-model" value="gemini" style="accent-color:#1a73e8;"> 🔵 Gemini
+          <label class="ai-radio-label" style="border:2px solid #f55036;color:#f55036;">
+            <input type="radio" name="ai-model" value="groq" style="accent-color:#f55036;"> 🟠 Groq (مجاني)
           </label>
           <label class="ai-radio-label" style="border:2px solid #10a37f;color:#10a37f;">
             <input type="radio" name="ai-model" value="chatgpt" style="accent-color:#10a37f;"> 🟢 ChatGPT
@@ -368,15 +368,16 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
             </a>
           </div>
         </div>
-        <div id="gemini-key-row" style="display:block;margin-top:8px;">
-          <input type="password" id="gemini-key-input" placeholder="أدخل Gemini API Key هنا (AIza...)" style="width:100%;padding:7px 10px;border:1.5px solid #1a73e8;border-radius:8px;font-family:monospace;font-size:0.78rem;">
+        <div id="gemini-key-row" style="display:none;margin-top:8px;">
+          <input type="password" id="gemini-key-input" placeholder="أدخل Groq API Key هنا (gsk_...)" style="width:100%;padding:7px 10px;border:1.5px solid #f55036;border-radius:8px;font-family:monospace;font-size:0.78rem;">
           <div style="margin-top:6px;text-align:center;">
-            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#1a73e8;color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
-              🔑 احصل على مفتاح Gemini — مجاني تماماً
+            <a href="https://console.groq.com/keys" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#f55036;color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
+              🔑 احصل على مفتاح Groq — مجاني تماماً
             </a>
           </div>
+          <div style="font-size:0.7rem;color:#888;margin-top:4px;text-align:center;">سجّل بحسابك على Google أو GitHub — بدون بطاقة دفع</div>
         </div>
-        <div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#888;" class="ai-note">🔵 Gemini مجاني تماماً • 🟣 Claude و 🟢 ChatGPT يحتاجان API Key مدفوع</div>
+        <div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#888;" class="ai-note">🟠 Groq مجاني تماماً • 🟣 Claude و 🟢 ChatGPT يحتاجان API Key مدفوع</div>
       </div>
       <div class="btn-row">
         <button class="btn btn-ai" id="ai-btn" onclick="runAIAnalysis()">🤖 تحليل بالذكاء الاصطناعي</button>
@@ -1180,7 +1181,7 @@ function init() {
     r.addEventListener('change', () => {
       document.getElementById('openai-key-row').style.display = r.value === 'chatgpt' ? 'block' : 'none';
       document.getElementById('claude-key-row').style.display = r.value === 'claude' ? 'block' : 'none';
-      document.getElementById('gemini-key-row').style.display = r.value === 'gemini' ? 'block' : 'none';
+      document.getElementById('gemini-key-row').style.display = r.value === 'groq' ? 'block' : 'none';
     });
   });
   setTimeout(() => document.getElementById('splash').classList.add('hide'), 2400);
@@ -1513,31 +1514,31 @@ Additional tests and clinical recommendations.
 Note: This report is for educational purposes only.`;
 
   btn.disabled=true;box.classList.add('show');
-  document.getElementById('ai-box-title').textContent=model==='gemini'?'Gemini AI Analysis':model==='chatgpt'?'ChatGPT Analysis':'Claude AI Analysis';
+  document.getElementById('ai-box-title').textContent=model==='groq'?'Groq AI Analysis':model==='chatgpt'?'ChatGPT Analysis':'Claude AI Analysis';
   content.innerHTML=`<div class="loading-dots"><span></span><span></span><span></span></div> Analyzing / جاري التحليل...`;
   try{
     let txt='';
-    if(model==='gemini'){
+    if(model==='groq'){
       const KEY = document.getElementById('gemini-key-input').value.trim();
       if(!KEY){
         content.innerHTML = currentLang==='ar'
-          ? '⚠️ الرجاء إدخال مفتاح Gemini API أولاً — اضغط الزر الأزرق للحصول عليه مجاناً'
-          : '⚠️ Please enter your Gemini API Key first — click the blue button to get one for free';
+          ? '⚠️ الرجاء إدخال مفتاح Groq API أولاً — اضغط الزر البرتقالي للحصول عليه مجاناً'
+          : '⚠️ Please enter your Groq API Key first — click the orange button to get one for free';
         btn.disabled=false; btn.innerHTML='🔄 Retry'; return;
       }
-      // Try to discover available models first
-      const models = ['gemini-2.0-flash-lite', 'gemini-pro', 'gemini-1.0-pro', 'gemini-1.5-pro-latest'];
-      let txt_found = false;
-      for(const modelName of models){
-        try{
-          const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})});
-          const d=await r.json();
-          if(d.candidates?.[0]?.content?.parts?.[0]?.text){txt=d.candidates[0].content.parts[0].text;txt_found=true;break;}
-          if(d.error?.code===404) continue; // try next model
-          content.innerHTML='⚠️ Gemini Error ('+modelName+'): '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;
-        }catch(e){continue;}
-      }
-      if(!txt_found){content.innerHTML='⚠️ '+(currentLang==="ar"?"جميع موديلات Gemini غير متاحة لهذا المفتاح. تأكد من صحة المفتاح أو أنشئ مفتاحاً جديداً":"All Gemini models unavailable for this key. Please verify your key or create a new one.");btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
+      const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${KEY}`},
+        body:JSON.stringify({
+          model:'llama-3.3-70b-versatile',
+          max_tokens:2000,
+          temperature:0.3,
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      const d=await r.json();
+      if(d.choices?.[0]?.message?.content) txt=d.choices[0].message.content;
+      else{content.innerHTML='⚠️ Groq Error: '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
     }else if(model==='chatgpt'){
       const key=document.getElementById('openai-key-input').value.trim();
       if(!key){content.innerHTML='⚠️ Enter OpenAI API Key';btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
