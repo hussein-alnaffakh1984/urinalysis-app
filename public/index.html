@@ -1525,7 +1525,7 @@ Note: This report is for educational purposes only.`;
           : '⚠️ Please enter your Gemini API Key first — click the blue button to get one for free';
         btn.disabled=false; btn.innerHTML='🔄 Retry'; return;
       }
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})});
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})});
       const d=await r.json();
       if(d.candidates?.[0]?.content?.parts?.[0]?.text)txt=d.candidates[0].content.parts[0].text;
       else{content.innerHTML='⚠️ Gemini Error: '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
