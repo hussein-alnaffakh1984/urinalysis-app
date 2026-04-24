@@ -195,6 +195,14 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
 @keyframes inputGlow{0%{box-shadow:0 0 0 0 rgba(13,115,119,0.4)}100%{box-shadow:0 0 0 6px rgba(13,115,119,0)}}
 .input-changed{animation:inputGlow 0.5s ease;}
 @media print{body{background:#fff!important;}header,.tabs,.btn-row,.ai-box,.ai-selector,#tab-mcq,#tab-cases,#tab-ref{display:none!important;}.card{box-shadow:none;border:1px solid #ddd;}}
+  .model-card{background:#fff;border-radius:12px;padding:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08);border-top:4px solid #ddd;}
+  .model-card-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-weight:700;font-size:0.85rem;}
+  .model-card-content{font-size:0.78rem;line-height:1.7;color:#333;max-height:220px;overflow-y:auto;}
+  .model-card-status{display:inline-block;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;margin-top:6px;}
+  .status-loading{background:#fff3cd;color:#856404;}
+  .status-done{background:#d1ecf1;color:#0c5460;}
+  .status-error{background:#f8d7da;color:#721c24;}
+  @media(max-width:600px){#comparison-results{grid-template-columns:1fr !important;}}
 </style>
 </head>
 <body>
@@ -309,7 +317,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
         <tbody id="micro-body"></tbody>
       </table>
       <div class="btn-row">
-        <button class="btn btn-gold" onclick="showTab('report');generateReport()">📋 إنشاء التقرير</button>
+        <button class="btn btn-gold" onclick="showTab('report');generateReport()"><span id="gen-report-lbl">📋 إنشاء التقرير</span></button>
         <button class="btn btn-outline" onclick="showTab('chemical')">→ رجوع</button>
       </div>
     </div>
@@ -335,7 +343,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
       <div class="ai-box" id="ai-box">
         <div class="ai-box-header">
           <div class="ai-icon">🤖</div>
-          <div><h3 id="ai-box-title">التحليل بالذكاء الاصطناعي / AI Analysis</h3><small>تفسير سريري ذكي مبني على جميع النتائج معاً</small></div>
+          <div><h3 id="ai-box-title">التحليل بالذكاء الاصطناعي / AI Analysis</h3><small id="ai-box-sub">تفسير سريري ذكي مبني على جميع النتائج معاً</small></div>
         </div>
         <div class="ai-content" id="ai-content"></div>
       </div>
@@ -346,7 +354,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
             <input type="radio" name="ai-model" value="claude" checked style="accent-color:var(--purple);"> 🟣 Claude
           </label>
           <label class="ai-radio-label" style="border:2px solid #f55036;color:#f55036;">
-            <input type="radio" name="ai-model" value="groq" style="accent-color:#f55036;"> 🟠 Groq (مجاني)
+            <input type="radio" name="ai-model" value="groq" style="accent-color:#f55036;"> 🟠 Groq (<span id="groq-free-lbl">مجاني</span>)
           </label>
           <label class="ai-radio-label" style="border:2px solid #10a37f;color:#10a37f;">
             <input type="radio" name="ai-model" value="chatgpt" style="accent-color:#10a37f;"> 🟢 ChatGPT
@@ -356,7 +364,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
           <input type="password" id="openai-key-input" placeholder="أدخل OpenAI API Key هنا (sk-...)" style="width:100%;padding:7px 10px;border:1.5px solid #10a37f;border-radius:8px;font-family:monospace;font-size:0.78rem;">
           <div style="margin-top:6px;text-align:center;">
             <a href="https://platform.openai.com/api-keys" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#10a37f;color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
-              🔑 احصل على مفتاح ChatGPT
+              <span id="chatgpt-key-lbl">🔑 احصل على مفتاح ChatGPT</span>
             </a>
           </div>
         </div>
@@ -364,7 +372,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
           <input type="password" id="claude-key-input" placeholder="أدخل Anthropic API Key هنا (sk-ant-...)" style="width:100%;padding:7px 10px;border:1.5px solid var(--purple);border-radius:8px;font-family:monospace;font-size:0.78rem;">
           <div style="margin-top:6px;text-align:center;">
             <a href="https://console.anthropic.com/settings/keys" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:var(--purple);color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
-              🔑 احصل على مفتاح Claude
+              <span id="claude-key-lbl">🔑 احصل على مفتاح Claude</span>
             </a>
           </div>
         </div>
@@ -372,17 +380,53 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
           <input type="password" id="gemini-key-input" placeholder="أدخل Groq API Key هنا (gsk_...)" style="width:100%;padding:7px 10px;border:1.5px solid #f55036;border-radius:8px;font-family:monospace;font-size:0.78rem;">
           <div style="margin-top:6px;text-align:center;">
             <a href="https://console.groq.com/keys" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#f55036;color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
-              🔑 احصل على مفتاح Groq — مجاني تماماً
+              <span id="groq-key-lbl">🔑 احصل على مفتاح Groq — مجاني تماماً</span>
             </a>
           </div>
-          <div style="font-size:0.7rem;color:#888;margin-top:4px;text-align:center;">سجّل بحسابك على Google أو GitHub — بدون بطاقة دفع</div>
+          <div style="font-size:0.7rem;color:#888;margin-top:4px;text-align:center;"><span id="groq-hint-lbl">سجّل بحسابك على Google أو GitHub — بدون بطاقة دفع</span></div>
         </div>
         <div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#888;" class="ai-note">🟠 Groq مجاني تماماً • 🟣 Claude و 🟢 ChatGPT يحتاجان API Key مدفوع</div>
       </div>
+
+      <!-- مقارنة شاملة -->
+      <div style="margin-top:14px;background:linear-gradient(135deg,#f0fff8,#e8f8f0);border-radius:12px;padding:13px 15px;border:2px solid #27ae60;">
+        <div style="font-size:0.85rem;font-weight:700;color:#27ae60;margin-bottom:6px;text-align:center;">
+          <span id="cmp-title-lbl">🔬 مقارنة بحثية شاملة — ثلاثة نماذج مجانية</span>
+        </div>
+        <div style="font-size:0.72rem;color:#555;text-align:center;margin-bottom:10px;">
+          <span id="cmp-sub-lbl">يرسل نفس البيانات لـ Llama 3.3 و Mixtral و Gemma2 تلقائياً ويقارن النتائج</span>
+        </div>
+        <div style="margin-bottom:8px;">
+          <input type="password" id="compare-groq-key" id="compare-groq-placeholder" placeholder="أدخل مفتاح Groq (gsk_...) — مطلوب للمقارنة" style="width:100%;padding:7px 10px;border:1.5px solid #27ae60;border-radius:8px;font-family:monospace;font-size:0.78rem;">
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="btn" onclick="runComparison()" id="compare-btn" style="background:linear-gradient(90deg,#27ae60,#2ecc71);color:#fff;flex:1;justify-content:center;">
+            <span id="cmp-btn-lbl">⚖️ تشغيل المقارنة البحثية</span>
+          </button>
+          <a href="https://console.groq.com/keys" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:#f55036;color:#fff;padding:7px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;text-decoration:none;white-space:nowrap;">
+            <span id="cmp-groq-lbl">🔑 مفتاح Groq المجاني</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- نتائج المقارنة -->
+      <div id="comparison-box" style="display:none;margin-top:14px;">
+        <div style="font-size:0.9rem;font-weight:700;color:var(--navy);margin-bottom:10px;text-align:center;padding-bottom:8px;border-bottom:2px solid #27ae60;">
+          <span id="cmp-results-title">📊 نتائج المقارنة البحثية</span>
+        </div>
+        <div id="comparison-results" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;"></div>
+        <div id="comparison-summary" style="margin-top:12px;background:#f8f9fa;border-radius:10px;padding:12px;font-size:0.82rem;"></div>
+        <div style="margin-top:10px;text-align:center;">
+          <button class="btn btn-outline" onclick="exportComparison()" style="font-size:0.78rem;">
+            <span id="export-lbl">📥 تصدير نتائج المقارنة (CSV)</span>
+          </button>
+        </div>
+      </div>
+
       <div class="btn-row">
-        <button class="btn btn-ai" id="ai-btn" onclick="runAIAnalysis()">🤖 تحليل بالذكاء الاصطناعي</button>
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
-        <button class="btn btn-outline" onclick="resetAll()">🔄 فحص جديد</button>
+        <button class="btn btn-ai" id="ai-btn" onclick="runAIAnalysis()"><span id="ai-main-btn-lbl">🤖 تحليل بالذكاء الاصطناعي</span></button>
+        <button class="btn btn-primary" onclick="window.print()"><span id="print-lbl">🖨️ طباعة</span></button>
+        <button class="btn btn-outline" onclick="resetAll()"><span id="reset-lbl">🔄 فحص جديد</span></button>
       </div>
     </div>
   </div>
@@ -415,7 +459,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
         <div style="font-size:1.1rem;font-weight:700;color:var(--purple);margin-bottom:6px;" id="score-grade"></div>
         <div style="color:#666;font-size:0.83rem;" id="score-msg"></div>
         <div class="btn-row" style="justify-content:center;margin-top:12px;">
-          <button class="btn btn-gold" onclick="startQuiz()">🔄 اختبار جديد / New Quiz</button>
+          <button class="btn btn-gold" onclick="startQuiz()"><span id="quiz-new-lbl">🔄 اختبار جديد</span></button>
         </div>
       </div>
     </div>
@@ -1113,7 +1157,55 @@ function toggleLang() {
       : 'Complete data entry first';
   }
 
-  // Update report stat chips if visible
+  // Update comparison section
+  const cmpTitle = document.getElementById('cmp-title-lbl');
+  if(cmpTitle) cmpTitle.textContent = isAr ? '🔬 مقارنة بحثية شاملة — ثلاثة نماذج مجانية' : '🔬 Comprehensive Research Comparison — Three Free Models';
+  const cmpSub = document.getElementById('cmp-sub-lbl');
+  if(cmpSub) cmpSub.textContent = isAr ? 'يرسل نفس البيانات لـ Llama 3.3 و Mixtral و Gemma2 تلقائياً ويقارن النتائج' : 'Automatically sends data to Llama 3.3, Mixtral & Gemma2 and compares results';
+  const cmpBtn = document.getElementById('cmp-btn-lbl');
+  if(cmpBtn) cmpBtn.textContent = isAr ? '⚖️ تشغيل المقارنة البحثية' : '⚖️ Run Research Comparison';
+  const cmpGroq = document.getElementById('cmp-groq-lbl');
+  if(cmpGroq) cmpGroq.textContent = isAr ? '🔑 مفتاح Groq المجاني' : '🔑 Get Free Groq Key';
+  const cmpResultsTitle = document.getElementById('cmp-results-title');
+  if(cmpResultsTitle) cmpResultsTitle.textContent = isAr ? '📊 نتائج المقارنة البحثية' : '📊 Research Comparison Results';
+  const exportLbl = document.getElementById('export-lbl');
+  if(exportLbl) exportLbl.textContent = isAr ? '📥 تصدير نتائج المقارنة (CSV)' : '📥 Export Comparison Results (CSV)';
+
+  // Update key links
+  const chatgptKeyLbl = document.getElementById('chatgpt-key-lbl');
+  if(chatgptKeyLbl) chatgptKeyLbl.textContent = isAr ? '🔑 احصل على مفتاح ChatGPT' : '🔑 Get ChatGPT API Key';
+  const claudeKeyLbl = document.getElementById('claude-key-lbl');
+  if(claudeKeyLbl) claudeKeyLbl.textContent = isAr ? '🔑 احصل على مفتاح Claude' : '🔑 Get Claude API Key';
+  const groqKeyLbl = document.getElementById('groq-key-lbl');
+  if(groqKeyLbl) groqKeyLbl.textContent = isAr ? '🔑 احصل على مفتاح Groq — مجاني تماماً' : '🔑 Get Groq Key — Completely Free';
+  const groqHint = document.getElementById('groq-hint-lbl');
+  if(groqHint) groqHint.textContent = isAr ? 'سجّل بحسابك على Google أو GitHub — بدون بطاقة دفع' : 'Sign up with Google or GitHub — No credit card needed';
+  const groqFree = document.getElementById('groq-free-lbl');
+  if(groqFree) groqFree.textContent = isAr ? 'مجاني' : 'Free';
+
+  // Update main buttons
+  const aiMainBtn = document.getElementById('ai-main-btn-lbl');
+  if(aiMainBtn) aiMainBtn.textContent = isAr ? '🤖 تحليل بالذكاء الاصطناعي' : '🤖 AI Analysis';
+  const printLbl = document.getElementById('print-lbl');
+  if(printLbl) printLbl.textContent = isAr ? '🖨️ طباعة' : '🖨️ Print';
+  const resetLbl = document.getElementById('reset-lbl');
+  if(resetLbl) resetLbl.textContent = isAr ? '🔄 فحص جديد' : '🔄 New Test';
+  const genReportLbl = document.getElementById('gen-report-lbl');
+  if(genReportLbl) genReportLbl.textContent = isAr ? '📋 إنشاء التقرير' : '📋 Generate Report';
+  const quizNewLbl = document.getElementById('quiz-new-lbl');
+  if(quizNewLbl) quizNewLbl.textContent = isAr ? '🔄 اختبار جديد' : '🔄 New Quiz';
+
+  // Update AI box sub
+  const aiBoxSub = document.getElementById('ai-box-sub');
+  if(aiBoxSub) aiBoxSub.textContent = isAr ? 'تفسير سريري ذكي مبني على جميع النتائج معاً' : 'Smart clinical interpretation based on all results';
+
+  // Update Groq compare placeholder
+  const cmpInput = document.getElementById('compare-groq-key');
+  if(cmpInput) cmpInput.placeholder = isAr ? 'أدخل مفتاح Groq (gsk_...) — مطلوب للمقارنة' : 'Enter Groq API Key (gsk_...) — Required for comparison';
+
+  // Update AI retry button if visible
+  const aiBtn = document.getElementById('ai-btn');
+  if(aiBtn && !aiBtn.disabled) aiBtn.innerHTML = `<span id="ai-main-btn-lbl">${isAr?'🤖 تحليل بالذكاء الاصطناعي':'🤖 AI Analysis'}</span>`;
   const chips = document.getElementById('stat-chips');
   if (chips && chips.children.length > 0) {
     const lbls = chips.querySelectorAll('.lbl');
@@ -1448,16 +1540,16 @@ function generateReport() {
   CRYSTAL_TYPES.forEach(t=>{const el=document.getElementById(`inp-${t.id}`);if(!el||!el.value||el.value==='None')return;filled++;abn++;crystalRows+=`<div class="report-row"><span class="report-label">${t.ar}</span><span class="report-value abn">${el.value} ⚠️</span></div>`;});
   if(castRows)mRows+=`<div style="font-weight:700;color:var(--navy);font-size:0.78rem;margin:6px 0 3px;border-top:1px dashed #ccc;padding-top:5px;">🔬 Casts</div>${castRows}`;
   if(crystalRows)mRows+=`<div style="font-weight:700;color:var(--navy);font-size:0.78rem;margin:6px 0 3px;border-top:1px dashed #ccc;padding-top:5px;">💎 Crystals</div>${crystalRows}`;
-  document.getElementById('stat-chips').innerHTML=`<div class="stat-chip"><div class="num">${filled}</div><div class="lbl">إجمالي</div></div><div class="stat-chip"><div class="num" style="color:var(--green)">${filled-abn}</div><div class="lbl">طبيعية</div></div><div class="stat-chip"><div class="num" style="color:var(--red)">${abn}</div><div class="lbl">غير طبيعية</div></div>`;
+  document.getElementById('stat-chips').innerHTML=`<div class="stat-chip"><div class="num">${filled}</div><div class="lbl">إجمالي</div></div><div class="stat-chip"><div class="num" style="color:var(--green)">${filled-abn}</div><div class="lbl">${isAr?"طبيعية":"Normal"}</div></div><div class="stat-chip"><div class="num" style="color:var(--red)">${abn}</div><div class="lbl">${isAr?"غير طبيعية":"Abnormal"}</div></div>`;
   document.getElementById('report-content').innerHTML=`
     <div class="report-header">
-      <h2>🔬 Urinalysis Training Report — تقرير تدريب تحليل الإدرار</h2>
+      <h2>${isAr?'🔬 تقرير تدريب تحليل الإدرار':'🔬 Urinalysis Training Report'}</h2>
       <p>Al-Kafeel University — College of Health & Medical Technologies — Medical Lab Tech Dept.</p>
       <p>جامعة الكفيل — كلية التقنيات الصحية والطبية — قسم تقنيات المختبرات الطبية</p>
-      <p style="font-size:0.72rem;color:#888;">2025-2026 | بإشراف / Supervised by: م.م. حسين علي حسين النفاخ</p>
+      <p style="font-size:0.72rem;color:#888;">${isAr?'بحث تخرج 2025-2026 | بإشراف: م.م. حسين علي حسين النفاخ':'Graduation Project 2025-2026 | Supervised by: Asst.Lect. Hussein Ali Hussein Al-Naffakh'}</p>
     </div>
     <div style="background:#f0f8ff;border-radius:10px;padding:10px 13px;margin-bottom:10px;">
-      <div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid var(--teal-light);padding-bottom:3px;">👤 Patient Info / بيانات المريض</div>
+      <div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid var(--teal-light);padding-bottom:3px;">${isAr?'👤 بيانات المريض':'👤 Patient Information'}</div>
       <div class="report-row"><span class="report-label">Name / الاسم</span><span class="report-value">${name}</span></div>
       <div class="report-row"><span class="report-label">Age / العمر</span><span class="report-value">${age} y</span></div>
       <div class="report-row"><span class="report-label">Gender / الجنس</span><span class="report-value">${gT}</span></div>
@@ -1465,9 +1557,9 @@ function generateReport() {
       <div class="report-row"><span class="report-label">File / الملف</span><span class="report-value">${pid}</span></div>
       <div class="report-row"><span class="report-label">Doctor / الطبيب</span><span class="report-value">${doc}</span></div>
     </div>
-    ${pRows?`<div style="background:#f4fff4;border-radius:10px;padding:10px 13px;margin-bottom:10px;"><div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid #4caf50;padding-bottom:3px;">🌡️ Physical / فيزيائي</div>${pRows}</div>`:''}
-    ${cRows?`<div style="background:#fff9f0;border-radius:10px;padding:10px 13px;margin-bottom:10px;"><div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid #ff9800;padding-bottom:3px;">⚗️ Chemical / كيميائي</div>${cRows}</div>`:''}
-    ${mRows?`<div style="background:#faf0ff;border-radius:10px;padding:10px 13px;margin-bottom:10px;"><div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid var(--purple);padding-bottom:3px;">🔬 Microscopic / مجهري</div>${mRows}</div>`:''}
+    ${pRows?`<div style="background:#f4fff4;border-radius:10px;padding:10px 13px;margin-bottom:10px;"><div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid #4caf50;padding-bottom:3px;">${isAr?'🌡️ الفحص الفيزيائي':'🌡️ Physical Examination'}</div>${pRows}</div>`:''}
+    ${cRows?`<div style="background:#fff9f0;border-radius:10px;padding:10px 13px;margin-bottom:10px;"><div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid #ff9800;padding-bottom:3px;">${isAr?'⚗️ الفحص الكيميائي':'⚗️ Chemical Examination'}</div>${cRows}</div>`:''}
+    ${mRows?`<div style="background:#faf0ff;border-radius:10px;padding:10px 13px;margin-bottom:10px;"><div style="font-weight:700;color:var(--navy);margin-bottom:7px;font-size:0.85rem;border-bottom:2px solid var(--purple);padding-bottom:3px;">${isAr?'🔬 الفحص المجهري':'🔬 Microscopic Examination'}</div>${mRows}</div>`:''}
     ${!pRows&&!cRows&&!mRows?'<p style="text-align:center;color:#aaa;padding:14px">لم تُدخل أي نتائج فحوصات بعد</p>':''}`;
 }
 
@@ -1607,6 +1699,147 @@ function resetAll(){
 function openLightbox(url,name,desc){document.getElementById('lightbox-img').src=url;document.getElementById('lightbox-caption').textContent=name;document.getElementById('lightbox-sub').textContent=desc;document.getElementById('lightbox').classList.add('show');document.body.style.overflow='hidden';}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');document.body.style.overflow='';}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
+// ===== COMPARISON =====
+const GROQ_MODELS = [
+  { id:'llama', name:'🦙 Llama 3.3 70B', model:'llama-3.3-70b-versatile', color:'#f55036' },
+  { id:'mixtral', name:'🌀 Mixtral 8x7B', model:'mixtral-8x7b-32768', color:'#8e44ad' },
+  { id:'gemma', name:'💎 Gemma 2 9B', model:'gemma2-9b-it', color:'#1a73e8' },
+];
+
+let comparisonData = [];
+
+async function runComparison() {
+  const KEY = document.getElementById('compare-groq-key').value.trim();
+  if(!KEY){ alert(currentLang==='ar'?'الرجاء إدخال مفتاح Groq أولاً':'Please enter Groq API key first'); return; }
+
+  const allTests=[...PHYSICAL_TESTS,...CHEMICAL_TESTS,...MICRO_TESTS];
+  const results=[];
+  allTests.forEach(t=>{const el=document.getElementById(`inp-${t.id}`);if(el&&el.value){const isAbn=document.getElementById(`status-${t.id}`)?.classList.contains('badge-abnormal');results.push(`${t.ar} (${t.en||t.ar}): ${el.value} [${isAbn?'غير طبيعي':'طبيعي'}]`);}});
+  [...CAST_TYPES,...CRYSTAL_TYPES].forEach(t=>{const el=document.getElementById(`inp-${t.id}`);if(el&&el.value&&el.value!=='None')results.push(`${t.ar}: ${el.value} [غير طبيعي]`);});
+  if(results.length===0){ alert(currentLang==='ar'?'الرجاء إدخال نتائج الفحوصات أولاً':'Please enter test results first'); return; }
+
+  const ptName = document.getElementById('pt-name').value||'غير محدد';
+  const ptAge  = document.getElementById('pt-age').value||'غير محدد';
+  const ptGen  = document.getElementById('pt-gender').value;
+  const gender = ptGen==='male'?'ذكر':ptGen==='female'?'أنثى':'غير محدد';
+  const symptoms = document.getElementById('pt-symptoms').value||'لا يوجد';
+
+  const prompt = `أنت متخصص في تقنيات المختبرات الطبية. حلل نتائج تحليل الإدرار التالية وأعطِ تشخيصاً موجزاً ومنظماً.
+
+المريض: ${ptName}، العمر: ${ptAge}، الجنس: ${gender}، الأعراض: ${symptoms}
+
+النتائج:
+${results.join('\n')}
+
+أجب بهذا الهيكل الدقيق فقط:
+**التشخيص الأول:** [اسم المرض] ([نسبة الاحتمال]%)
+**التشخيص الثاني:** [اسم المرض] ([نسبة الاحتمال]%)
+**الحالة العامة:** [مصاب / سليم]
+**المؤشرات الرئيسية:** [أهم 2-3 نتائج داعمة للتشخيص]
+**التوصية:** [فحص تكميلي مقترح]`;
+
+  // Show comparison box
+  const box = document.getElementById('comparison-box');
+  const resultsDiv = document.getElementById('comparison-results');
+  const summaryDiv = document.getElementById('comparison-summary');
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  const btn = document.getElementById('compare-btn');
+  btn.disabled = true;
+  btn.innerHTML = currentLang==="ar"?'⏳ جاري المقارنة...':'⏳ Comparing...';
+  comparisonData = [];
+
+  // Render loading cards
+  resultsDiv.innerHTML = GROQ_MODELS.map(m => `
+    <div class="model-card" id="card-${m.id}" style="border-top-color:${m.color}">
+      <div class="model-card-header" style="color:${m.color}">${m.name}</div>
+      <div class="model-card-content" id="content-${m.id}">
+        <div class="loading-dots"><span></span><span></span><span></span></div> <span class="cmp-loading-txt">${currentLang==="ar"?"جاري التحليل...":"Analyzing..."}</span>
+      </div>
+      <span class="model-card-status status-loading" id="status-${m.id}">${currentLang==="ar"?"⏳ جاري...":"⏳ Loading..."}</span>
+    </div>`).join('');
+  summaryDiv.innerHTML = '';
+
+  // Call all 3 models in parallel
+  const promises = GROQ_MODELS.map(async m => {
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${KEY}`},
+        body:JSON.stringify({ model:m.model, max_tokens:600, temperature:0.2, messages:[{role:'user',content:prompt}] })
+      });
+      const d = await r.json();
+      if(d.choices?.[0]?.message?.content){
+        const txt = d.choices[0].message.content;
+        document.getElementById(`content-${m.id}`).innerHTML = txt.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+        document.getElementById(`status-${m.id}`).className='model-card-status status-done';
+        document.getElementById(`status-${m.id}`).textContent='✅ اكتمل';
+        // Extract diagnosis
+        const diagMatch = txt.match(/التشخيص الأول[:\s]+([^\n\*]+)/);
+        const diag = diagMatch ? diagMatch[1].trim() : 'غير محدد';
+        const pctMatch = txt.match(/\((\d+)%\)/);
+        const pct = pctMatch ? pctMatch[1] : '—';
+        comparisonData.push({ model:m.name, diagnosis:diag, confidence:pct, full:txt });
+        return { model:m.name, diagnosis:diag, confidence:pct, success:true };
+      } else {
+        document.getElementById(`content-${m.id}`).innerHTML = '⚠️ خطأ: ' + JSON.stringify(d.error||d);
+        document.getElementById(`status-${m.id}`).className='model-card-status status-error';
+        document.getElementById(`status-${m.id}`).textContent='❌ خطأ';
+        return { model:m.name, success:false };
+      }
+    } catch(e) {
+      document.getElementById(`content-${m.id}`).innerHTML = '⚠️ ' + e.message;
+      document.getElementById(`status-${m.id}`).className='model-card-status status-error';
+      document.getElementById(`status-${m.id}`).textContent='❌ خطأ';
+      return { model:m.name, success:false };
+    }
+  });
+
+  await Promise.all(promises);
+
+  // Summary
+  const successful = comparisonData.filter(d => d.diagnosis !== 'غير محدد');
+  const diagnoses = successful.map(d => d.diagnosis);
+  const unique = [...new Set(diagnoses)];
+  const agreementPct = successful.length > 0 ? Math.round((diagnoses.filter(d => d === diagnoses[0]).length / successful.length) * 100) : 0;
+
+  summaryDiv.innerHTML = `
+    <div style="font-weight:700;color:var(--navy);margin-bottom:8px;font-size:0.85rem;">${currentLang==="ar"?"📋 ملخص المقارنة البحثية":"📋 Comparison Summary"}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      ${comparisonData.map(d=>`
+        <div style="background:#fff;border-radius:8px;padding:8px 10px;border-right:4px solid ${GROQ_MODELS.find(m=>m.name===d.model)?.color||'#ddd'}">
+          <div style="font-size:0.72rem;color:#888;">${d.model}</div>
+          <div style="font-size:0.82rem;font-weight:700;color:var(--navy);margin-top:3px;">${d.diagnosis}</div>
+          <div style="font-size:0.7rem;color:#27ae60;">${currentLang==="ar"?"احتمالية":"Confidence"}: ${d.confidence}%</div>
+        </div>`).join('')}
+    </div>
+    <div style="background:${agreementPct===100?'#d1ecf1':agreementPct>=66?'#fff3cd':'#f8d7da'};border-radius:8px;padding:8px 12px;font-size:0.82rem;">
+      <strong>${currentLang==="ar"?"نسبة الاتفاق بين النماذج:":"Model Agreement Rate:"}</strong> ${agreementPct}%
+      ${agreementPct===100?currentLang==="ar"?'✅ جميع النماذج متفقة على نفس التشخيص':'✅ All models agree on the same diagnosis':
+        agreementPct>=66?currentLang==="ar"?'⚠️ أغلب النماذج متفقة مع اختلاف بسيط':'⚠️ Most models agree with minor differences':
+        currentLang==="ar"?'❌ النماذج مختلفة في التشخيص — يُوصى بمراجعة بشرية':'❌ Models disagree — Human review recommended'}
+    </div>`;
+
+  btn.disabled = false;
+  btn.innerHTML = currentLang==="ar"?'<span id="cmp-btn-lbl">⚖️ تشغيل المقارنة مجدداً</span>':'<span id="cmp-btn-lbl">⚖️ Run Again</span>';
+}
+
+function exportComparison() {
+  if(comparisonData.length === 0){ alert(currentLang==="ar"?'لا توجد بيانات للتصدير':'No data to export'); return; }
+  const ptName = document.getElementById('pt-name').value||'غير محدد';
+  const date = document.getElementById('pt-date').value||new Date().toISOString().split('T')[0];
+  const isArExp = currentLang==="ar"; let csv = (isArExp?'المريض,التاريخ,النموذج,التشخيص,نسبة الاحتمال':'Patient,Date,Model,Diagnosis,Confidence')+'\n';
+  comparisonData.forEach(d => {
+    csv += `"${ptName}","${date}","${d.model}","${d.diagnosis}","${d.confidence}%"\n`;
+  });
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${currentLang==="ar"?'مقارنة':'comparison'}_${ptName}_${date}.csv`;
+  a.click();
+}
+
 window.onload=init;
 </script>
 </body>
