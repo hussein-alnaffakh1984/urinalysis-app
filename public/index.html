@@ -394,7 +394,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
           <span id="cmp-title-lbl">🔬 مقارنة بحثية شاملة — ثلاثة نماذج مجانية</span>
         </div>
         <div style="font-size:0.72rem;color:#555;text-align:center;margin-bottom:10px;">
-          <span id="cmp-sub-lbl">يرسل نفس البيانات لـ Llama 3.3 و DeepSeek R1 و Qwen 2.5 تلقائياً ويقارن النتائج</span>
+          <span id="cmp-sub-lbl">يرسل نفس البيانات لـ Llama 3.3 70B و Llama 3.1 8B و GPT-OSS 120B تلقائياً ويقارن النتائج</span>
         </div>
         <div style="margin-bottom:8px;">
           <input type="password" id="compare-groq-key" id="compare-groq-placeholder" placeholder="أدخل مفتاح Groq (gsk_...) — مطلوب للمقارنة" style="width:100%;padding:7px 10px;border:1.5px solid #27ae60;border-radius:8px;font-family:monospace;font-size:0.78rem;">
@@ -1161,7 +1161,7 @@ function toggleLang() {
   const cmpTitle = document.getElementById('cmp-title-lbl');
   if(cmpTitle) cmpTitle.textContent = isAr ? '🔬 مقارنة بحثية شاملة — ثلاثة نماذج مجانية' : '🔬 Comprehensive Research Comparison — Three Free Models';
   const cmpSub = document.getElementById('cmp-sub-lbl');
-  if(cmpSub) cmpSub.textContent = isAr ? 'يرسل نفس البيانات لـ Llama 3.3 و DeepSeek R1 و Qwen 2.5 تلقائياً ويقارن النتائج' : 'Automatically sends data to Llama 3.3, Mixtral & Gemma2 and compares results';
+  if(cmpSub) cmpSub.textContent = isAr ? 'يرسل نفس البيانات لـ Llama 3.3 70B و Llama 3.1 8B و GPT-OSS 120B تلقائياً ويقارن النتائج' : 'Automatically sends data to Llama 3.3, Mixtral & Gemma2 and compares results';
   const cmpBtn = document.getElementById('cmp-btn-lbl');
   if(cmpBtn) cmpBtn.textContent = isAr ? '⚖️ تشغيل المقارنة البحثية' : '⚖️ Run Research Comparison';
   const cmpGroq = document.getElementById('cmp-groq-lbl');
@@ -1701,9 +1701,9 @@ function closeLightbox(){document.getElementById('lightbox').classList.remove('s
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
 // ===== COMPARISON =====
 const GROQ_MODELS = [
-  { id:'llama', name:'🦙 Llama 3.3 70B', model:'llama-3.3-70b-versatile', color:'#f55036' },
-  { id:'deepseek', name:'🧠 DeepSeek R1', model:'deepseek-r1-distill-llama-70b', color:'#8e44ad' },
-  { id:'qwen', name:'⚡ Qwen 2.5 72B', model:'qwen-2.5-72b-instruct', color:'#1a73e8' },
+  { id:'llama70b',  name:'🦙 Llama 3.3 70B',   model:'llama-3.3-70b-versatile',          color:'#f55036' },
+  { id:'llama8b',   name:'⚡ Llama 3.1 8B',     model:'llama-3.1-8b-instant',              color:'#8e44ad' },
+  { id:'gptoss',    name:'🤖 GPT-OSS 120B',     model:'openai/gpt-oss-120b',               color:'#1a73e8' },
 ];
 
 let comparisonData = [];
