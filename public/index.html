@@ -356,7 +356,7 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
           <input type="password" id="openai-key-input" placeholder="أدخل OpenAI API Key هنا (sk-...)" style="width:100%;padding:7px 10px;border:1.5px solid #10a37f;border-radius:8px;font-family:monospace;font-size:0.78rem;">
           <div style="margin-top:6px;text-align:center;">
             <a href="https://platform.openai.com/api-keys" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#10a37f;color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
-              🔑 احصل على مفتاح ChatGPT مجاناً
+              🔑 احصل على مفتاح ChatGPT
             </a>
           </div>
         </div>
@@ -368,13 +368,15 @@ header{background:linear-gradient(90deg,#0a1628,#0d7377);padding:12px 18px;displ
             </a>
           </div>
         </div>
-        <div id="claude-key-row" style="display:none;margin-top:8px;">
-          <input type="password" id="claude-key-input" placeholder="أدخل Anthropic API Key هنا (sk-ant-...)" style="width:100%;padding:7px 10px;border:1.5px solid var(--purple);border-radius:8px;font-family:monospace;font-size:0.78rem;">
-          <div style="font-size:0.68rem;color:#888;margin-top:4px;text-align:center;">
-            احصل على مفتاحك من <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--purple);">console.anthropic.com</a>
+        <div id="gemini-key-row" style="display:block;margin-top:8px;">
+          <input type="password" id="gemini-key-input" placeholder="أدخل Gemini API Key هنا (AIza...)" style="width:100%;padding:7px 10px;border:1.5px solid #1a73e8;border-radius:8px;font-family:monospace;font-size:0.78rem;">
+          <div style="margin-top:6px;text-align:center;">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#1a73e8;color:#fff;padding:5px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;text-decoration:none;">
+              🔑 احصل على مفتاح Gemini — مجاني تماماً
+            </a>
           </div>
         </div>
-        <div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#888;">🔵 Gemini — Free | 🟣 Claude & 🟢 ChatGPT — Need API Key</div>
+        <div style="text-align:center;margin-top:6px;font-size:0.7rem;color:#888;" class="ai-note">🔵 Gemini مجاني تماماً • 🟣 Claude و 🟢 ChatGPT يحتاجان API Key مدفوع</div>
       </div>
       <div class="btn-row">
         <button class="btn btn-ai" id="ai-btn" onclick="runAIAnalysis()">🤖 تحليل بالذكاء الاصطناعي</button>
@@ -1178,6 +1180,7 @@ function init() {
     r.addEventListener('change', () => {
       document.getElementById('openai-key-row').style.display = r.value === 'chatgpt' ? 'block' : 'none';
       document.getElementById('claude-key-row').style.display = r.value === 'claude' ? 'block' : 'none';
+      document.getElementById('gemini-key-row').style.display = r.value === 'gemini' ? 'block' : 'none';
     });
   });
   setTimeout(() => document.getElementById('splash').classList.add('hide'), 2400);
@@ -1515,7 +1518,13 @@ Note: This report is for educational purposes only.`;
   try{
     let txt='';
     if(model==='gemini'){
-      const KEY='AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY';
+      const KEY = document.getElementById('gemini-key-input').value.trim();
+      if(!KEY){
+        content.innerHTML = currentLang==='ar'
+          ? '⚠️ الرجاء إدخال مفتاح Gemini API أولاً — اضغط الزر الأزرق للحصول عليه مجاناً'
+          : '⚠️ Please enter your Gemini API Key first — click the blue button to get one for free';
+        btn.disabled=false; btn.innerHTML='🔄 Retry'; return;
+      }
       const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})});
       const d=await r.json();
       if(d.candidates?.[0]?.content?.parts?.[0]?.text)txt=d.candidates[0].content.parts[0].text;
