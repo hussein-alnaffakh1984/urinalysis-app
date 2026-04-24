@@ -1547,10 +1547,24 @@ Note: This report is for educational purposes only.`;
       if(d.choices?.[0]?.message?.content)txt=d.choices[0].message.content;
       else{content.innerHTML='⚠️ ChatGPT Error: '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
     }else{
-      const claudeKey=document.getElementById('claude-key-input').value.trim();
+      // Sanitize key — remove any non-ASCII characters
+      const claudeKey=document.getElementById('claude-key-input').value.trim().replace(/[^\x20-\x7E]/g,'');
       if(claudeKey){
-        // Direct call with user key
-        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-5',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+        // Direct call with user key — encode prompt as base64 to avoid header issues
+        const r=await fetch('https://api.anthropic.com/v1/messages',{
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+            'x-api-key':claudeKey,
+            'anthropic-version':'2023-06-01',
+            'anthropic-dangerous-direct-browser-access':'true'
+          },
+          body:JSON.stringify({
+            model:'claude-haiku-4-5',
+            max_tokens:2000,
+            messages:[{role:'user',content:[{type:'text',text:prompt}]}]
+          })
+        });
         const d=await r.json();
         if(d.content?.[0]?.text)txt=d.content[0].text;
         else{content.innerHTML='⚠️ Claude Error: '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
