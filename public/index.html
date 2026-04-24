@@ -1525,10 +1525,19 @@ Note: This report is for educational purposes only.`;
           : '⚠️ Please enter your Gemini API Key first — click the blue button to get one for free';
         btn.disabled=false; btn.innerHTML='🔄 Retry'; return;
       }
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})});
-      const d=await r.json();
-      if(d.candidates?.[0]?.content?.parts?.[0]?.text)txt=d.candidates[0].content.parts[0].text;
-      else{content.innerHTML='⚠️ Gemini Error: '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
+      // Try to discover available models first
+      const models = ['gemini-2.0-flash-lite', 'gemini-pro', 'gemini-1.0-pro', 'gemini-1.5-pro-latest'];
+      let txt_found = false;
+      for(const modelName of models){
+        try{
+          const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:2000,temperature:0.3}})});
+          const d=await r.json();
+          if(d.candidates?.[0]?.content?.parts?.[0]?.text){txt=d.candidates[0].content.parts[0].text;txt_found=true;break;}
+          if(d.error?.code===404) continue; // try next model
+          content.innerHTML='⚠️ Gemini Error ('+modelName+'): '+JSON.stringify(d.error||d);btn.disabled=false;btn.innerHTML='🔄 Retry';return;
+        }catch(e){continue;}
+      }
+      if(!txt_found){content.innerHTML='⚠️ '+(currentLang==="ar"?"جميع موديلات Gemini غير متاحة لهذا المفتاح. تأكد من صحة المفتاح أو أنشئ مفتاحاً جديداً":"All Gemini models unavailable for this key. Please verify your key or create a new one.");btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
     }else if(model==='chatgpt'){
       const key=document.getElementById('openai-key-input').value.trim();
       if(!key){content.innerHTML='⚠️ Enter OpenAI API Key';btn.disabled=false;btn.innerHTML='🔄 Retry';return;}
